@@ -95,6 +95,11 @@
         "command": "vscode-lm-proxy.setLogLevel",
         "title": "Set Log Level",
         "category": "LM Proxy"
+      },
+      {
+        "command": "vscode-lm-proxy.startClaudeCodeWithEnv",
+        "title": "Start Claude Code with Custom Environment",
+        "category": "LM Proxy"
       }
     ],
     "configuration": {

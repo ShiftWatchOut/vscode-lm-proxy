@@ -127,6 +127,12 @@ class StatusBarManager {
       command: 'vscode-lm-proxy.selectAnthropicModel',
     })
 
+    items.push({
+      label: '$(terminal) Launch Claude Code',
+      description: 'with current proxy settings',
+      command: 'vscode-lm-proxy.startClaudeCodeWithEnv',
+    })
+
     const currentClaudeCodeBackgroundModelId =
       modelManager.getClaudeCodeBackgroundModelId()
     items.push({
