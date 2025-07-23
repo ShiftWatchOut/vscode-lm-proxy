@@ -1,7 +1,7 @@
 {
   "name": "vscode-lm-proxy",
   "displayName": "LM Proxy",
-  "version": "1.0.3",
+  "version": "1.0.4-alpha+001",
   "description": "Expose VSCode's GitHub Copilot capabilities through OpenAI, Anthropic, and Claude Code compatible REST APIs. Access GitHub Copilot from external applications using the VSCode Language Model API.",
   "categories": [
     "AI",
@@ -99,6 +99,11 @@
       {
         "command": "vscode-lm-proxy.startClaudeCodeWithEnv",
         "title": "Start Claude Code with Custom Environment",
+        "category": "LM Proxy"
+      },
+      {
+        "command": "vscode-lm-proxy.manageEnvVariables",
+        "title": "Manage Environment Variables",
         "category": "LM Proxy"
       }
     ],
