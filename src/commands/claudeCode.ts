@@ -1,3 +1,4 @@
+import * as os from 'node:os'
 import * as vscode from 'vscode'
 import { serverManager } from '../server/manager'
 
@@ -80,6 +81,34 @@ function detectConflicts(variables: EnvVariable[]): string[] {
     .map(([key, _]) => key)
 }
 
+/**
+ * 生成 macOS/Linux 环境变量设置命令
+ * 仅在非 Windows 平台使用
+ *
+ * @param variables 环境变量数组
+ * @returns 设置环境变量的命令字符串，多个变量用 && 连接
+ */
+function generateEnvSetupCommand(variables: EnvVariable[]): string {
+  if (variables.length === 0) {
+    return ''
+  }
+
+  const commands: string[] = []
+
+  for (const variable of variables) {
+    // 转义特殊字符以防止命令注入
+    const escapedValue = variable.value
+      .replace(/\\/g, '\\\\') // 转义反斜杠
+      .replace(/"/g, '\\"') // 转义双引号
+      .replace(/'/g, "\\'") // 转义单引号
+      .replace(/\$/g, '\\$') // 转义美元符号
+
+    // Unix-like 系统 (macOS, Linux) 使用 export 命令
+    commands.push(`export ${variable.key}="${escapedValue}"`)
+  }
+
+  return commands.join(' && ')
+}
 async function promptForNewVariable(
   context: vscode.ExtensionContext,
 ): Promise<EnvVariable | undefined> {
@@ -404,17 +433,44 @@ export function registerStartClaudeCodeWithEnvCommand(
     // Save current selection for next time
     saveLastSelectedVariables(context, selectedVariables)
 
+    const platform = os.platform()
+
+    // 创建终端
     const terminal = vscode.window.createTerminal({
       name: 'Claude Code Server',
-      env: customEnv,
+      env: customEnv, // 设置环境变量
     })
 
     terminal.show()
-    terminal.sendText('claude', true)
+
+    // 根据平台选择不同的环境变量设置方式
+    if (platform === 'win32') {
+      // Windows: 直接使用 VSCode API 设置环境变量，然后运行 claude
+      terminal.sendText('claude', true)
+    } else {
+      // macOS/Linux: 使用 export 命令显式设置环境变量
+      const envSetupCommand = generateEnvSetupCommand(selectedVariables)
+
+      if (envSetupCommand && selectedVariables.length > 0) {
+        // 先设置环境变量，然后运行 claude
+        const fullCommand = `${envSetupCommand} && claude`
+        terminal.sendText(fullCommand, true)
+      } else {
+        // 没有环境变量时直接运行 claude
+        terminal.sendText('claude', true)
+      }
+    }
 
     const envCount = selectedVariables.length
+    const platformName =
+      platform === 'win32'
+        ? 'Windows'
+        : platform === 'darwin'
+          ? 'macOS'
+          : 'Linux'
+    const methodName = platform === 'win32' ? 'VSCode API' : 'export commands'
     vscode.window.showInformationMessage(
-      `Starting Claude Code with ${envCount} environment variable${envCount === 1 ? '' : 's'}.`,
+      `Starting Claude Code on ${platformName} with ${envCount} environment variable${envCount === 1 ? '' : 's'} (via ${methodName}).`,
     )
   }
 
